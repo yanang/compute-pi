@@ -26,8 +26,8 @@ int main(int argc, char const *argv[])
     diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
     error = diff / M_PI;
     printf("%lf,",error);
-    //printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
-    //       (end.tv_nsec - start.tv_nsec)/ONE_SEC);
+    printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
+           (end.tv_nsec - start.tv_nsec)/ONE_SEC);
 
     // OpenMP with 2 threads
     clock_gettime(CLOCK_ID, &start);
@@ -38,8 +38,8 @@ int main(int argc, char const *argv[])
     diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
     error = diff / M_PI;
     printf("%lf,",error);
-    //printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
-    //       (end.tv_nsec - start.tv_nsec)/ONE_SEC);
+    printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
+           (end.tv_nsec - start.tv_nsec)/ONE_SEC);
 
     // OpenMP with 4 threads
     clock_gettime(CLOCK_ID, &start);
@@ -50,8 +50,8 @@ int main(int argc, char const *argv[])
     diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
     error = diff / M_PI;
     printf("%lf,",error);
-    //printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
-    //       (end.tv_nsec - start.tv_nsec)/ONE_SEC);
+    printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
+           (end.tv_nsec - start.tv_nsec)/ONE_SEC);
 
     // AVX SIMD
     clock_gettime(CLOCK_ID, &start);
@@ -62,8 +62,8 @@ int main(int argc, char const *argv[])
     diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
     error = diff / M_PI;
     printf("%lf,",error);
-    //printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
-    //       (end.tv_nsec - start.tv_nsec)/ONE_SEC);
+    printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
+           (end.tv_nsec - start.tv_nsec)/ONE_SEC);
 
     // AVX SIMD + Loop unrolling
     clock_gettime(CLOCK_ID, &start);
@@ -73,9 +73,9 @@ int main(int argc, char const *argv[])
     clock_gettime(CLOCK_ID, &end);
     diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
     error = diff / M_PI;
-    printf("%lf\n",error);
-    //printf("%lf\n", (double) (end.tv_sec - start.tv_sec) +
-    //       (end.tv_nsec - start.tv_nsec)/ONE_SEC);
+    printf("%lf,",error);
+    printf("%lf\n", (double) (end.tv_sec - start.tv_sec) +
+           (end.tv_nsec - start.tv_nsec)/ONE_SEC);
 
     return 0;
 }
