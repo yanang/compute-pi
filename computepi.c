@@ -2,6 +2,27 @@
 #include <immintrin.h>
 #include <omp.h>
 #include "computepi.h"
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
+
+#define MEM_SIZE (128)
+#define MAX_SOURCE_SIZE (0x100000)
+
+cl_device_id device_id = NULL;
+cl_context context = NULL;
+cl_command_queue command_queue = NULL;
+cl_mem memobj = NULL;
+cl_program program = NULL;
+cl_kernel kernel = NULL;
+cl_platform_id platform_id = NULL;
+size_t global_Worksize;
+size_t local_Worksize = 1;
+cl_uint ret_num_devices;
+cl_uint ret_num_platforms;
+cl_int ret;
 
 double compute_pi_baseline(size_t N)
 {
@@ -116,4 +137,73 @@ double compute_pi_avx_unroll(size_t N)
           tmp3[0] + tmp3[1] + tmp3[2] + tmp3[3] +
           tmp4[0] + tmp4[1] + tmp4[2] + tmp4[3];
     return pi * 4.0;
+}
+void init_opencl(size_t N)
+{
+    FILE *fp;
+    char fileName[] = "./kernel.cl";
+    char *source_str;
+    size_t source_size;
+    global_Worksize = N;
+
+    /* Load the source code containing the kernel*/
+    fp = fopen(fileName, "r");
+    if (!fp) {
+        fprintf(stderr, "Failed to load kernel.\n");
+        exit(1);
+    }
+    source_str = (char*)malloc(MAX_SOURCE_SIZE);
+    source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
+    fclose(fp);
+
+    /* Get Platform and Device Info */
+    ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+    ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+
+    /* Create OpenCL context */
+    context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+
+    /* Create Command Queue
+     * clCreateCommandQueue() was deprecated as of OpenCL 2.0
+     *     ,and replaced with clCreateCommandQueueWithProperties in OpenCl 3.0 */
+    command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+
+    /* Create Memory Buffer */
+    memobj = clCreateBuffer(context, CL_MEM_READ_WRITE, MEM_SIZE * sizeof(double), NULL, &ret);
+
+    /* Create Kernel Program from the source */
+    program = clCreateProgramWithSource(context, 1, (const char **)&source_str,(const size_t *)&source_size, &ret);
+
+    /* Build Kernel Program */
+    ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+
+    /* Create OpenCL Kernel */
+    kernel = clCreateKernel(program, "compute_pi", &ret);
+
+    /* Set OpenCL Kernel Parameters */
+    ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &memobj);
+    ret = clSetKernelArg(kernel, 1, sizeof(uint), &N);
+}
+void free_opencl()
+{
+    ret = clFlush(command_queue);
+    ret = clFinish(command_queue);
+    ret = clReleaseKernel(kernel);
+    ret = clReleaseProgram(program);
+    ret = clReleaseMemObject(memobj);
+    ret = clReleaseCommandQueue(command_queue);
+    ret = clReleaseContext(context);
+
+}
+double compute_pi_opencl(size_t N)
+{
+    double *pii = (double *)malloc(sizeof(double)*MEM_SIZE);
+
+    //* Execute OpenCL Kernel */
+    ret =  clEnqueueNDRangeKernel (command_queue, kernel, 1, NULL, &global_Worksize, &local_Worksize, 0, NULL, NULL);
+
+    /* Copy results from the memory buffer */
+    ret = clEnqueueReadBuffer(command_queue, memobj, CL_TRUE, 0, MEM_SIZE * sizeof(double),pii, 0, NULL, NULL);
+
+    return pii[0];
 }

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include "computepi.h"
+#include <math.h>
 
 #define CLOCK_ID CLOCK_MONOTONIC_RAW
 #define ONE_SEC 1000000000.0
-#define M_PI acos(-1.0)
 
 int main(int argc, char const *argv[])
 {
@@ -71,6 +71,20 @@ int main(int argc, char const *argv[])
         pi = compute_pi_avx_unroll(N);
     }
     clock_gettime(CLOCK_ID, &end);
+    diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
+    error = diff / M_PI;
+    printf("%lf,",error);
+    printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
+           (end.tv_nsec - start.tv_nsec)/ONE_SEC);
+
+    // opencl with baseline
+    init_opencl(N);
+    clock_gettime(CLOCK_ID, &start);
+    for (i = 0; i < loop; i++) {
+        pi = compute_pi_opencl(N);
+    }
+    clock_gettime(CLOCK_ID, &end);
+    free_opencl();
     diff = pi - M_PI > 0 ? pi - M_PI : M_PI -pi;
     error = diff / M_PI;
     printf("%lf,",error);

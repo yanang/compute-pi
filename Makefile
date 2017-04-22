@@ -12,17 +12,17 @@ $(GIT_HOOKS):
 	@echo
 
 default: $(GIT_HOOKS) computepi.o
-	$(CC) $(CFLAGS) computepi.o time_test.c -DBASELINE -o time_test_baseline
-	$(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_2 -o time_test_openmp_2
-	$(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_4 -o time_test_openmp_4
-	$(CC) $(CFLAGS) computepi.o time_test.c -DAVX -o time_test_avx
-	$(CC) $(CFLAGS) computepi.o time_test.c -DAVXUNROLL -o time_test_avxunroll
-	$(CC) $(CFLAGS) computepi.o benchmark_clock_gettime.c -o benchmark_clock_gettime
+	$(CC) $(CFLAGS) computepi.o time_test.c -DBASELINE -o time_test_baseline -lOpenCL
+	$(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_2 -o time_test_openmp_2 -lOpenCL
+	$(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_4 -o time_test_openmp_4 -lOpenCL
+	$(CC) $(CFLAGS) computepi.o time_test.c -DAVX -o time_test_avx -lOpenCL
+	$(CC) $(CFLAGS) computepi.o time_test.c -DAVXUNROLL -o time_test_avxunroll -lOpenCL
+	$(CC) $(CFLAGS) computepi.o benchmark_clock_gettime.c -o benchmark_clock_gettime -lOpenCL
 
 .PHONY: clean default
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@ 
+	$(CC) -c $(CFLAGS) $< -o $@
 
 check: default
 	time ./time_test_baseline
@@ -32,7 +32,7 @@ check: default
 	time ./time_test_avxunroll
 
 gencsv: default
-	for i in `seq 100 500 25000`; do \
+	for i in `seq 100 500 10000`; do \
 		printf "%d," $$i;\
 		./benchmark_clock_gettime $$i; \
 	done > result_clock_gettime.csv
